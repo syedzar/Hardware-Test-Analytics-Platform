@@ -86,10 +86,15 @@ def insert_test(
     duration: float,
     result: str,
     failure_reason: str | None,
+    timestamp: str | None = None,
     db_path: str | None = None,
 ) -> dict:
-    """Insert a test result and return the stored record."""
-    timestamp = current_timestamp()
+    """Insert a test result and return the stored record.
+
+    ``timestamp`` defaults to the current UTC time; the data generator
+    supplies its own so simulated tests are spread over several days.
+    """
+    timestamp = timestamp or current_timestamp()
     with get_connection(db_path) as connection:
         cursor = connection.execute(
             INSERT_SQL,
