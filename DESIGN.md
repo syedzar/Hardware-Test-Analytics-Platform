@@ -1,8 +1,8 @@
-# Design
+# Hardware Test Analytics Platform: Design
 
 ## Goal
 
-Receive engineering test data, validate it, evaluate it, store it, retrieve
+Receive hardware test data, validate it, evaluate it, store it, retrieve
 it, analyze it, and automatically verify that the software doing so keeps
 working.
 

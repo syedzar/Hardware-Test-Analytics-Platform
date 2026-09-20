@@ -29,7 +29,7 @@ def submit(client, **overrides):
 def test_root(client):
     response = client.get("/")
     assert response.status_code == 200
-    assert response.json()["message"] == "Engineering Test Data Platform"
+    assert response.json()["message"] == "Hardware Test Analytics Platform"
 
 
 # --- POST /tests -----------------------------------------------------------

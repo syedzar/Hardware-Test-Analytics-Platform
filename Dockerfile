@@ -2,7 +2,7 @@ FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    ETP_DB_PATH=/data/test_data.db
+    HTAP_DB_PATH=/data/test_data.db
 
 WORKDIR /app
 

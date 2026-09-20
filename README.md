@@ -1,10 +1,14 @@
-# Engineering Test Data Platform
+# Hardware Test Analytics Platform
 
-A backend service that simulates how an engineering team collects, validates,
-stores and analyzes hardware test results. Tests for devices such as
-`FPGA-001` are submitted over a REST API; the server decides PASS/FAIL from
-engineering limits, stores the result in SQLite, and exposes queries and
-statistics.
+A backend service for collecting, validating, storing and analyzing hardware
+test results. Engineers submit measurements for devices such as `FPGA-001`
+over a REST API; the server decides PASS/FAIL from engineering limits,
+stores every result in SQLite, and turns the raw data into analytics: failure
+lists, per-device history, pass rates and average voltage, current and
+temperature.
+
+The initial version runs on simulated data. The design leaves room for real
+measurements from a microcontroller over UART/USB serial.
 
 **Stack:** Python, FastAPI, SQLite (plain SQL), Pytest, GitHub Actions, Docker.
 
@@ -101,8 +105,8 @@ request across Python 3.11–3.13.
 ## Docker
 
 ```bash
-docker build -t engineering-test-platform .
-docker run -p 8000:8000 -v etp-data:/data engineering-test-platform
+docker build -t hardware-test-analytics-platform .
+docker run -p 8000:8000 -v htap-data:/data hardware-test-analytics-platform
 ```
 
 Then open <http://localhost:8000/docs>. The database lives in the `/data`
@@ -126,7 +130,7 @@ app/
   services.py    PASS/FAIL evaluation and statistics maths (no FastAPI/SQL)
   database.py    All SQL, parameterized
   schemas.py     Pydantic request/response models
-  config.py      Limits and settings (DB path via ETP_DB_PATH)
+  config.py      Limits and settings (DB path via HTAP_DB_PATH)
 scripts/generate_test_data.py
 tests/           test_evaluation.py, test_database.py, test_api.py, test_generator.py
 ```

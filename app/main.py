@@ -15,7 +15,7 @@ from fastapi.responses import JSONResponse
 from app import database, schemas, services
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s [%(name)s] %(message)s")
-logger = logging.getLogger("etp")
+logger = logging.getLogger("htap")
 
 
 @asynccontextmanager
@@ -26,7 +26,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Engineering Test Data Platform",
+    title="Hardware Test Analytics Platform",
     description=(
         "Collect, validate, store and analyze hardware test results. "
         "PASS/FAIL is decided by the server from engineering limits."
@@ -48,7 +48,7 @@ async def validation_error_handler(request: Request, exc: RequestValidationError
 
 @app.get("/")
 def root():
-    return {"message": "Engineering Test Data Platform", "docs": "/docs"}
+    return {"message": "Hardware Test Analytics Platform", "docs": "/docs"}
 
 
 @app.post("/tests", response_model=schemas.TestResponse, status_code=status.HTTP_201_CREATED)

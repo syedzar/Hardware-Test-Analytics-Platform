@@ -9,5 +9,5 @@ MAX_CURRENT = 1.0  # amperes
 MAX_TEMPERATURE = 80.0  # degrees Celsius
 MIN_DURATION_EXCLUSIVE = 0.0  # seconds; duration must be strictly greater
 
-# Path of the SQLite database file. Override with the ETP_DB_PATH env variable.
-DATABASE_PATH = os.environ.get("ETP_DB_PATH", "test_data.db")
+# Path of the SQLite database file. Override with the HTAP_DB_PATH env variable.
+DATABASE_PATH = os.environ.get("HTAP_DB_PATH", "test_data.db")
