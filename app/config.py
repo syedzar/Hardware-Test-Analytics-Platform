@@ -11,6 +11,3 @@ MIN_DURATION_EXCLUSIVE = 0.0  # seconds; duration must be strictly greater
 
 # Path of the SQLite database file. Override with the ETP_DB_PATH env variable.
 DATABASE_PATH = os.environ.get("ETP_DB_PATH", "test_data.db")
-
-# Accepted test types.
-TEST_TYPES = ("POWER", "UART", "MEMORY", "THERMAL", "FUNCTIONAL")

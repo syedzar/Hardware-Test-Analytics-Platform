@@ -75,3 +75,20 @@ def calculate_pass_rate(passed_tests: int, total_tests: int) -> float:
     if total_tests == 0:
         return 0.0
     return round(passed_tests / total_tests * 100, 1)
+
+
+def _round_or_none(value: float | None) -> float | None:
+    return None if value is None else round(value, 2)
+
+
+def build_statistics(row: dict) -> dict:
+    """Turn raw aggregate values from the database into the API statistics shape."""
+    return {
+        "total_tests": row["total_tests"],
+        "passed_tests": row["passed_tests"],
+        "failed_tests": row["failed_tests"],
+        "pass_rate": calculate_pass_rate(row["passed_tests"], row["total_tests"]),
+        "average_voltage": _round_or_none(row["average_voltage"]),
+        "average_current": _round_or_none(row["average_current"]),
+        "average_temperature": _round_or_none(row["average_temperature"]),
+    }
