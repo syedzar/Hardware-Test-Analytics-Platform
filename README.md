@@ -185,6 +185,24 @@ Requesting `GET /devices/FPGA-003/statistics` after generating simulated data re
 
 ---
 
+## Demo
+
+### Interactive API Documentation
+
+FastAPI generates a Swagger UI page automatically. It lists every endpoint and the request and response schemas, and lets each endpoint be tried directly in the browser.
+
+![Swagger UI](screenshots/swagger_docs.png)
+
+### Overall Statistics
+
+Calling `GET /statistics` against the simulated dataset of 500 tests returns the total, passed and failed counts, the pass rate, and the average voltage, current, and temperature.
+
+![Statistics Endpoint](screenshots/swagger_statistics.png)
+
+The result shows 436 of 500 tests passing, a pass rate of 87.2 percent.
+
+---
+
 ## Project Structure
 
 ```text
@@ -209,6 +227,10 @@ Hardware-Test-Analytics-Platform/
 ├── .github/
 │   └── workflows/
 │       └── tests.yml
+│
+├── screenshots/
+│   ├── swagger_docs.png
+│   └── swagger_statistics.png
 │
 ├── Dockerfile
 ├── requirements.txt
