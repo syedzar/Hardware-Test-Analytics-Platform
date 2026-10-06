@@ -1,0 +1,55 @@
+-- Hardware Test Analytics Platform: Power BI measures.
+--
+-- The table is named test_results (the query loaded from
+-- bi/data/test_results.csv). Create each measure with Modeling > New measure
+-- and paste one block at a time. The expected value of every measure on the
+-- committed dataset is listed in BUILD_GUIDE.md.
+
+Total Tests = COUNTROWS ( test_results )
+
+Passed Tests = SUM ( test_results[passed] )
+
+Failure Count = SUM ( test_results[failed] )
+
+-- Format as a percentage with one decimal place.
+Pass Rate = DIVIDE ( [Passed Tests], [Total Tests] )
+
+Devices Tested = DISTINCTCOUNT ( test_results[device_id] )
+
+-- "+ 0" shows 0 instead of a blank when a filter leaves no failures.
+Devices With Failures =
+CALCULATE (
+    DISTINCTCOUNT ( test_results[device_id] ),
+    test_results[failed] = 1
+) + 0
+
+-- Lowest pass rate of any device in the current filter context.
+-- Format as a percentage with one decimal place.
+Worst Device Pass Rate =
+MINX ( VALUES ( test_results[device_id] ), [Pass Rate] )
+
+-- The device with that pass rate. Devices that tie are all listed.
+Worst Device =
+VAR DeviceRates =
+    ADDCOLUMNS ( VALUES ( test_results[device_id] ), "@PassRate", [Pass Rate] )
+VAR LowestRate =
+    MINX ( DeviceRates, [@PassRate] )
+RETURN
+    CONCATENATEX (
+        FILTER ( DeviceRates, [@PassRate] = LowestRate ),
+        test_results[device_id],
+        ", ",
+        test_results[device_id], ASC
+    )
+
+Voltage Faults = SUM ( test_results[voltage_fault] )
+
+Current Faults = SUM ( test_results[current_fault] )
+
+Temperature Faults = SUM ( test_results[temperature_fault] )
+
+Average Voltage (V) = AVERAGE ( test_results[voltage_v] )
+
+Average Current (A) = AVERAGE ( test_results[current_a] )
+
+Average Temperature (C) = AVERAGE ( test_results[temperature_c] )
