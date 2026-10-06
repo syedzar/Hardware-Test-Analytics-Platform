@@ -4,17 +4,20 @@ Run from the project root:
 
     python -m scripts.generate_test_data
     python -m scripts.generate_test_data --devices 5 --tests-per-device 10 --reset
+    python -m scripts.generate_test_data --backend oracle --seed 42 --reset
 
 Each device gets its own small bias (some run hotter, some draw more current),
 and every measurement has a small chance of a fault being injected, so the
 data contains a realistic mix of PASS and FAIL results.
+
+The same seed and ``--now`` value produce the same rows on either backend.
 """
 
 import argparse
 import random
 from datetime import datetime, timedelta, timezone
 
-from app import config, database, services
+from app import config, repository, services
 
 TEST_TYPES = ("POWER", "UART", "MEMORY", "THERMAL", "FUNCTIONAL")
 FAULT_PROBABILITY = 0.04  # per measurement
@@ -42,13 +45,19 @@ def generate_measurements(rng: random.Random, bias: dict) -> dict:
     }
 
 
-def generate(
-    devices: int, tests_per_device: int, seed: int | None, db_path: str | None = None
-) -> None:
+def generate_rows(
+    devices: int, tests_per_device: int, seed: int | None, now: datetime | None = None
+) -> list[dict]:
+    """Build the simulated test results without touching a database.
+
+    ``now`` is the newest possible timestamp; it defaults to the current UTC
+    time. Pass a fixed value to make the timestamps reproducible too.
+    """
     rng = random.Random(seed)
-    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    now = now or datetime.now(timezone.utc).replace(tzinfo=None)
     spread = timedelta(days=30)
 
+    rows = []
     for number in range(1, devices + 1):
         device_id = f"FPGA-{number:03d}"
         bias = {
@@ -59,15 +68,35 @@ def generate(
             measurements = generate_measurements(rng, bias)
             evaluation = services.evaluate_test(**measurements)
             timestamp = now - timedelta(seconds=rng.uniform(0, spread.total_seconds()))
-            database.insert_test(
-                device_id=device_id,
-                test_type=rng.choice(TEST_TYPES),
-                result=evaluation.result,
-                failure_reason=evaluation.failure_reason,
-                timestamp=timestamp.isoformat(timespec="seconds"),
-                db_path=db_path,
-                **measurements,
+            rows.append(
+                {
+                    "device_id": device_id,
+                    "test_type": rng.choice(TEST_TYPES),
+                    "result": evaluation.result,
+                    "failure_reason": evaluation.failure_reason,
+                    "timestamp": timestamp.isoformat(timespec="seconds"),
+                    **measurements,
+                }
             )
+    return rows
+
+
+def generate(
+    devices: int,
+    tests_per_device: int,
+    seed: int | None,
+    db_path: str | None = None,
+    now: datetime | None = None,
+    backend=None,
+) -> None:
+    """Generate the rows and insert them through the chosen backend.
+
+    ``db_path`` only applies to SQLite; ``backend`` defaults to ``DB_BACKEND``.
+    """
+    backend = backend or repository.get_backend()
+    target = {"db_path": db_path} if db_path else {}
+    for row in generate_rows(devices, tests_per_device, seed, now):
+        backend.insert_test(**row, **target)
 
 
 def main() -> None:
@@ -75,21 +104,45 @@ def main() -> None:
     parser.add_argument("--devices", type=int, default=20)
     parser.add_argument("--tests-per-device", type=int, default=25)
     parser.add_argument("--seed", type=int, default=None, help="for reproducible data")
-    parser.add_argument("--db", default=config.DATABASE_PATH, help="database file")
+    parser.add_argument(
+        "--now",
+        type=datetime.fromisoformat,
+        default=None,
+        help="newest timestamp to generate, e.g. 2026-10-01T00:00:00 (default: now, UTC)",
+    )
+    parser.add_argument(
+        "--backend",
+        choices=(repository.SQLITE, repository.ORACLE),
+        default=config.DB_BACKEND,
+        help="database to load (default: DB_BACKEND)",
+    )
+    parser.add_argument(
+        "--db", default=config.DATABASE_PATH, help="SQLite database file (sqlite only)"
+    )
     parser.add_argument(
         "--reset", action="store_true", help="delete existing test results first"
     )
     args = parser.parse_args()
 
-    database.init_db(args.db)
-    if args.reset:
-        with database.get_connection(args.db) as connection:
-            connection.execute("DELETE FROM test_results")
-    generate(args.devices, args.tests_per_device, args.seed, args.db)
+    backend = repository.get_backend(args.backend)
+    if args.backend == repository.SQLITE:
+        target = {"db_path": args.db}
+        label = f"Database {args.db}"
+    else:
+        target = {}
+        label = f"Oracle {config.ORACLE_DSN}"
 
-    stats = services.build_statistics(database.get_statistics(args.db))
+    if args.reset:
+        backend.reset_db(**target)
+    else:
+        backend.init_db(**target)
+    generate(
+        args.devices, args.tests_per_device, args.seed, target.get("db_path"), args.now, backend
+    )
+
+    stats = services.build_statistics(backend.get_statistics(**target))
     print(
-        f"Database {args.db}: {stats['total_tests']} tests, "
+        f"{label}: {stats['total_tests']} tests, "
         f"{stats['passed_tests']} passed, {stats['failed_tests']} failed "
         f"({stats['pass_rate']}% pass rate)"
     )
