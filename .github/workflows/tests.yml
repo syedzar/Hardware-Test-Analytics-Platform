@@ -25,3 +25,42 @@ jobs:
 
       - name: Run pytest
         run: pytest -v
+
+  # The same suite with an Oracle Database Free service container, so the
+  # Oracle backend, the PL/SQL package and the backend parity tests run too.
+  oracle:
+    runs-on: ubuntu-latest
+    env:
+      ORACLE_USER: htap
+      ORACLE_PASSWORD: Ci${{ github.run_id }}x
+      ORACLE_DSN: localhost:1521/FREEPDB1
+    services:
+      oracle:
+        image: gvenzl/oracle-free:23-slim-faststart
+        env:
+          ORACLE_RANDOM_PASSWORD: "true"
+          APP_USER: htap
+          APP_USER_PASSWORD: Ci${{ github.run_id }}x
+        ports:
+          - 1521:1521
+        options: >-
+          --health-cmd healthcheck.sh
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # Fails if anything is skipped: without Oracle, coverage drops below 100%.
+      - name: Run pytest against Oracle with coverage
+        run: pytest -v -rs --cov=app --cov=scripts --cov=bi --cov-report=term-missing --cov-fail-under=100
