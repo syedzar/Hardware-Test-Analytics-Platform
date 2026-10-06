@@ -1,7 +1,8 @@
 """FastAPI application: HTTP routes only.
 
 Routes validate the request, delegate to ``app.services`` (engineering logic)
-and ``app.database`` (SQL), and shape the response.
+and to the data-access backend chosen by ``app.repository`` (SQLite or
+Oracle), and shape the response.
 """
 
 import logging
@@ -12,7 +13,7 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from app import database, schemas, services
+from app import config, repository, schemas, services
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s [%(name)s] %(message)s")
 logger = logging.getLogger("htap")
@@ -20,8 +21,8 @@ logger = logging.getLogger("htap")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    database.init_db()
-    logger.info("Database ready")
+    repository.get_backend().init_db()
+    logger.info("Database ready (%s backend)", config.DB_BACKEND)
     yield
 
 
@@ -59,7 +60,7 @@ def create_test(test: schemas.TestCreate):
         temperature=test.temperature,
         duration=test.duration,
     )
-    record = database.insert_test(
+    record = repository.get_backend().insert_test(
         device_id=test.device_id,
         test_type=test.test_type.value,
         voltage=test.voltage,
@@ -81,12 +82,12 @@ def create_test(test: schemas.TestCreate):
 
 @app.get("/tests", response_model=list[schemas.TestResponse])
 def list_tests():
-    return database.get_all_tests()
+    return repository.get_backend().get_all_tests()
 
 
 @app.get("/tests/{test_id}", response_model=schemas.TestResponse)
 def read_test(test_id: int):
-    record = database.get_test(test_id)
+    record = repository.get_backend().get_test(test_id)
     if record is None:
         raise HTTPException(status_code=404, detail=f"Test {test_id} not found")
     return record
@@ -94,7 +95,7 @@ def read_test(test_id: int):
 
 @app.delete("/tests/{test_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_test(test_id: int):
-    if not database.delete_test(test_id):
+    if not repository.get_backend().delete_test(test_id):
         raise HTTPException(status_code=404, detail=f"Test {test_id} not found")
     logger.info("Test %s deleted", test_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
@@ -102,22 +103,22 @@ def delete_test(test_id: int):
 
 @app.get("/failures", response_model=list[schemas.TestResponse])
 def list_failures():
-    return database.get_failed_tests()
+    return repository.get_backend().get_failed_tests()
 
 
 @app.get("/devices/{device_id}/tests", response_model=list[schemas.TestResponse])
 def list_device_tests(device_id: str):
-    return database.get_device_tests(device_id)
+    return repository.get_backend().get_device_tests(device_id)
 
 
 @app.get("/statistics", response_model=schemas.Statistics)
 def overall_statistics():
-    return services.build_statistics(database.get_statistics())
+    return services.build_statistics(repository.get_backend().get_statistics())
 
 
 @app.get("/devices/{device_id}/statistics", response_model=schemas.DeviceStatistics)
 def device_statistics(device_id: str):
-    row = database.get_device_statistics(device_id)
+    row = repository.get_backend().get_device_statistics(device_id)
     if row["total_tests"] == 0:
         raise HTTPException(status_code=404, detail=f"Device {device_id} has no tests")
     return {"device_id": device_id, **services.build_statistics(row)}
