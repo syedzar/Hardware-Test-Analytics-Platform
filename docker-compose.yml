@@ -1,0 +1,41 @@
+# Local Oracle Database Free for development, plus the API running against it.
+#
+#   docker compose up -d oracle          database only
+#   docker compose --profile api up -d   database and API
+#
+# Credentials are read from .env (see .env.example); nothing is set here.
+
+services:
+  oracle:
+    image: gvenzl/oracle-free:23-slim-faststart
+    ports:
+      - "1521:1521"
+    environment:
+      ORACLE_PASSWORD: ${ORACLE_SYSTEM_PASSWORD:?set ORACLE_SYSTEM_PASSWORD in .env}
+      APP_USER: ${ORACLE_USER:?set ORACLE_USER in .env}
+      APP_USER_PASSWORD: ${ORACLE_PASSWORD:?set ORACLE_PASSWORD in .env}
+    volumes:
+      - oracle-data:/opt/oracle/oradata
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+  api:
+    profiles: ["api"]
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      DB_BACKEND: oracle
+      ORACLE_USER: ${ORACLE_USER:?set ORACLE_USER in .env}
+      ORACLE_PASSWORD: ${ORACLE_PASSWORD:?set ORACLE_PASSWORD in .env}
+      ORACLE_DSN: oracle:1521/FREEPDB1
+    depends_on:
+      oracle:
+        condition: service_healthy
+
+volumes:
+  oracle-data:
