@@ -40,6 +40,51 @@ INSERT INTO test_results (
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
 """
 
+# Flat, one-row-per-test view used for reporting and the BI export. The fault
+# flags are read from the stored failure reason, so the limits live in one place.
+CREATE_REPORT_VIEW_SQL = """
+CREATE VIEW IF NOT EXISTS v_test_report AS
+SELECT
+    id AS result_id,
+    device_id,
+    test_type,
+    result,
+    CASE WHEN result = 'PASS' THEN 1 ELSE 0 END AS passed,
+    CASE WHEN result = 'FAIL' THEN 1 ELSE 0 END AS failed,
+    voltage AS voltage_v,
+    current AS current_a,
+    temperature AS temperature_c,
+    duration AS duration_s,
+    CASE WHEN INSTR(failure_reason, 'Voltage') > 0 THEN 1 ELSE 0 END AS voltage_fault,
+    CASE WHEN INSTR(failure_reason, 'Current') > 0 THEN 1 ELSE 0 END AS current_fault,
+    CASE WHEN INSTR(failure_reason, 'Temperature') > 0 THEN 1 ELSE 0 END AS temperature_fault,
+    CASE WHEN INSTR(failure_reason, 'Duration') > 0 THEN 1 ELSE 0 END AS duration_fault,
+    failure_reason,
+    timestamp AS tested_at,
+    SUBSTR(timestamp, 1, 10) AS test_date
+FROM test_results;
+"""
+
+REPORT_COLUMNS = (
+    "result_id",
+    "device_id",
+    "test_type",
+    "result",
+    "passed",
+    "failed",
+    "voltage_v",
+    "current_a",
+    "temperature_c",
+    "duration_s",
+    "voltage_fault",
+    "current_fault",
+    "temperature_fault",
+    "duration_fault",
+    "failure_reason",
+    "tested_at",
+    "test_date",
+)
+
 STATISTICS_SELECT = """
 SELECT
     COUNT(*) AS total_tests,
@@ -70,10 +115,19 @@ def get_connection(db_path: str | None = None) -> Iterator[sqlite3.Connection]:
 
 
 def init_db(db_path: str | None = None) -> None:
-    """Create the table and index if they do not exist yet."""
+    """Create the table, index and reporting view if they do not exist yet."""
     with get_connection(db_path) as connection:
         connection.execute(CREATE_TABLE_SQL)
         connection.execute(CREATE_INDEX_SQL)
+        connection.execute(CREATE_REPORT_VIEW_SQL)
+
+
+def reset_db(db_path: str | None = None) -> None:
+    """Drop every stored test and recreate the schema, so ids start at 1 again."""
+    with get_connection(db_path) as connection:
+        connection.execute("DROP VIEW IF EXISTS v_test_report")
+        connection.execute("DROP TABLE IF EXISTS test_results")
+    init_db(db_path)
 
 
 def insert_test(
@@ -168,3 +222,12 @@ def get_device_statistics(device_id: str, db_path: str | None = None) -> dict:
             STATISTICS_SELECT + " WHERE device_id = ?", (device_id,)
         ).fetchone()
     return dict(row)
+
+
+def get_report_rows(db_path: str | None = None) -> list[dict]:
+    """Every test as a flat reporting row, read from the ``v_test_report`` view."""
+    with get_connection(db_path) as connection:
+        rows = connection.execute(
+            f"SELECT {', '.join(REPORT_COLUMNS)} FROM v_test_report ORDER BY result_id"
+        ).fetchall()
+    return [dict(row) for row in rows]
