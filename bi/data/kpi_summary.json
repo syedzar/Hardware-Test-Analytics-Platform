@@ -1,0 +1,177 @@
+{
+  "total_tests": 500,
+  "passed_tests": 447,
+  "failure_count": 53,
+  "pass_rate": 89.4,
+  "devices_tested": 20,
+  "devices_with_failures": 17,
+  "worst_devices": [
+    "FPGA-015"
+  ],
+  "worst_device_pass_rate": 72.0,
+  "fault_counts": {
+    "voltage_fault": 13,
+    "current_fault": 24,
+    "temperature_fault": 17,
+    "duration_fault": 0
+  },
+  "average_voltage_v": 3.3,
+  "average_current_a": 0.54,
+  "average_temperature_c": 53.04,
+  "first_test_date": "2026-09-01",
+  "last_test_date": "2026-09-30",
+  "by_device": [
+    {
+      "device_id": "FPGA-001",
+      "total_tests": 25,
+      "failed_tests": 4,
+      "pass_rate": 84.0
+    },
+    {
+      "device_id": "FPGA-002",
+      "total_tests": 25,
+      "failed_tests": 4,
+      "pass_rate": 84.0
+    },
+    {
+      "device_id": "FPGA-003",
+      "total_tests": 25,
+      "failed_tests": 2,
+      "pass_rate": 92.0
+    },
+    {
+      "device_id": "FPGA-004",
+      "total_tests": 25,
+      "failed_tests": 3,
+      "pass_rate": 88.0
+    },
+    {
+      "device_id": "FPGA-005",
+      "total_tests": 25,
+      "failed_tests": 1,
+      "pass_rate": 96.0
+    },
+    {
+      "device_id": "FPGA-006",
+      "total_tests": 25,
+      "failed_tests": 2,
+      "pass_rate": 92.0
+    },
+    {
+      "device_id": "FPGA-007",
+      "total_tests": 25,
+      "failed_tests": 4,
+      "pass_rate": 84.0
+    },
+    {
+      "device_id": "FPGA-008",
+      "total_tests": 25,
+      "failed_tests": 1,
+      "pass_rate": 96.0
+    },
+    {
+      "device_id": "FPGA-009",
+      "total_tests": 25,
+      "failed_tests": 0,
+      "pass_rate": 100.0
+    },
+    {
+      "device_id": "FPGA-010",
+      "total_tests": 25,
+      "failed_tests": 4,
+      "pass_rate": 84.0
+    },
+    {
+      "device_id": "FPGA-011",
+      "total_tests": 25,
+      "failed_tests": 5,
+      "pass_rate": 80.0
+    },
+    {
+      "device_id": "FPGA-012",
+      "total_tests": 25,
+      "failed_tests": 2,
+      "pass_rate": 92.0
+    },
+    {
+      "device_id": "FPGA-013",
+      "total_tests": 25,
+      "failed_tests": 3,
+      "pass_rate": 88.0
+    },
+    {
+      "device_id": "FPGA-014",
+      "total_tests": 25,
+      "failed_tests": 0,
+      "pass_rate": 100.0
+    },
+    {
+      "device_id": "FPGA-015",
+      "total_tests": 25,
+      "failed_tests": 7,
+      "pass_rate": 72.0
+    },
+    {
+      "device_id": "FPGA-016",
+      "total_tests": 25,
+      "failed_tests": 2,
+      "pass_rate": 92.0
+    },
+    {
+      "device_id": "FPGA-017",
+      "total_tests": 25,
+      "failed_tests": 2,
+      "pass_rate": 92.0
+    },
+    {
+      "device_id": "FPGA-018",
+      "total_tests": 25,
+      "failed_tests": 0,
+      "pass_rate": 100.0
+    },
+    {
+      "device_id": "FPGA-019",
+      "total_tests": 25,
+      "failed_tests": 3,
+      "pass_rate": 88.0
+    },
+    {
+      "device_id": "FPGA-020",
+      "total_tests": 25,
+      "failed_tests": 4,
+      "pass_rate": 84.0
+    }
+  ],
+  "by_test_type": [
+    {
+      "test_type": "FUNCTIONAL",
+      "total_tests": 112,
+      "failed_tests": 11,
+      "pass_rate": 90.2
+    },
+    {
+      "test_type": "MEMORY",
+      "total_tests": 108,
+      "failed_tests": 14,
+      "pass_rate": 87.0
+    },
+    {
+      "test_type": "POWER",
+      "total_tests": 89,
+      "failed_tests": 12,
+      "pass_rate": 86.5
+    },
+    {
+      "test_type": "THERMAL",
+      "total_tests": 99,
+      "failed_tests": 10,
+      "pass_rate": 89.9
+    },
+    {
+      "test_type": "UART",
+      "total_tests": 92,
+      "failed_tests": 6,
+      "pass_rate": 93.5
+    }
+  ]
+}
